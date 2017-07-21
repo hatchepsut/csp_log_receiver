@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <sys/event.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -23,6 +22,7 @@ int close_connection( session_t sessions[], int esock) {
   close(esock); // Socket is automatically deregistered from /dev/poll on close */
   close(sessions[esock].ofd);
   free(sessions[esock].buf);
+  poll_remove_fd(esock);
   return(0);
 }
 
@@ -160,11 +160,11 @@ int main(int argc, char *argv[]) {
         printf("ofile: %s\n", ofile);
         ofd = open(ofile, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
         
-        sessions[csock].ofd = ofd;
-        sessions[csock].bytes_read = 0;
-        sessions[csock].bytes_left_to_read = 4096;
-        sessions[csock].buf = malloc(4096);
-        memset(sessions[csock].buf, 0, 4096);
+        sessions[index].ofd = ofd;
+        sessions[index].bytes_read = 0;
+        sessions[index].bytes_left_to_read = 4096;
+        sessions[index].buf = malloc(4096);
+        memset(sessions[index].buf, 0, 4096);
         
       } else {
         
