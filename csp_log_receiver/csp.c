@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "poll/poll.h"
+#include "poll.h"
 
 
 typedef struct {
