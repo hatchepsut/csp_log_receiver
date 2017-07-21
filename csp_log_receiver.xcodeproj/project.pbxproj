@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D074C2F41F21EA4400CF2151 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = D074C2F31F21EA4400CF2151 /* main.c */; };
+		D074C2FC1F21EBB400CF2151 /* csp.c in Sources */ = {isa = PBXBuildFile; fileRef = D074C2FA1F21EBB400CF2151 /* csp.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +24,8 @@
 
 /* Begin PBXFileReference section */
 		D074C2F01F21EA4400CF2151 /* csp_log_receiver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = csp_log_receiver; sourceTree = BUILT_PRODUCTS_DIR; };
-		D074C2F31F21EA4400CF2151 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		D074C2FA1F21EBB400CF2151 /* csp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = csp.c; path = csp_log_receiver/csp.c; sourceTree = "<group>"; };
+		D074C2FB1F21EBB400CF2151 /* poll */ = {isa = PBXFileReference; lastKnownFileType = folder; name = poll; path = csp_log_receiver/poll; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +42,8 @@
 		D074C2E71F21EA4400CF2151 = {
 			isa = PBXGroup;
 			children = (
+				D074C2FA1F21EBB400CF2151 /* csp.c */,
+				D074C2FB1F21EBB400CF2151 /* poll */,
 				D074C2F21F21EA4400CF2151 /* csp_log_receiver */,
 				D074C2F11F21EA4400CF2151 /* Products */,
 			);
@@ -57,7 +60,6 @@
 		D074C2F21F21EA4400CF2151 /* csp_log_receiver */ = {
 			isa = PBXGroup;
 			children = (
-				D074C2F31F21EA4400CF2151 /* main.c */,
 			);
 			path = csp_log_receiver;
 			sourceTree = "<group>";
@@ -120,7 +122,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D074C2F41F21EA4400CF2151 /* main.c in Sources */,
+				D074C2FC1F21EBB400CF2151 /* csp.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
