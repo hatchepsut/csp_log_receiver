@@ -16,11 +16,11 @@ int poll_init() {
 
 int poll_add_fd(int fd) {
   for(int i=0; i < NFDS; i++) {
-    if(fds[i].fd == -1) {
+if(fds[i].fd == -1) {
       fds[i].fd = fd;
       fds[i].events = POLLIN;
       if(i > highest_index) highest_index = i;
-      return(POLL_OK);
+      return(i);
     }
   } 
   return(POLL_EFULL);
