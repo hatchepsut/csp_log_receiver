@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     nsocks = poll_wait_for_event();
     
     
-    printf("nsocks = %d\n", nsocks);
+	printf("nsocks = %d\n", nsocks);
     
     if(nsocks == 0) continue;
     
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
       
       int events = poll_check_event(index);
       
-      if(events != 1) continue;
+	  if(events != 1) continue;
       
 
       esock = poll_get_fd(index);
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
           exit(1);
         }
         
-        poll_add_fd(csock);
+        int eindex = poll_add_fd(csock);
         
         // Create out filed */
         peer_addr_length = sizeof( struct sockaddr_in);
@@ -136,48 +136,50 @@ int main(int argc, char *argv[]) {
         printf("ofile: %s\n", ofile);
         ofd = open(ofile, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
         
-        sessions[index].ofd = ofd;
-        sessions[index].bytes_read = 0;
-        sessions[index].bytes_left_to_read = 4096;
-        sessions[index].buf = malloc(4096);
-        memset(sessions[index].buf, 0, 4096);
+        sessions[eindex].ofd = ofd;
+        sessions[eindex].bytes_read = 0;
+        sessions[eindex].bytes_left_to_read = 4096;
+        sessions[eindex].buf = malloc(4096);
+        memset(sessions[eindex].buf, 0, 4096);
         
       } else {
         
         printf("Ska läsa socket %d!\n", esock);
-        n = read(esock, sessions[esock].buf+sessions[esock].bytes_read, sessions[esock].bytes_left_to_read);
+n = read(esock, sessions[index].buf+sessions[index].bytes_read, sessions[index].bytes_left_to_read);
         if(n < 0) {
-          perror("read esock");
+          perror("read esock")	;
         }
 
         if(n == 0) {
-        	close_connection(sessions, esock);
+        	// Kan inte stänga här efter som klineten kan göra en halvstängning. Måste alltid skicka response.
+        	close_connection(sessions, index);
         	continue;
         }
 
-        sessions[esock].bytes_read += n;
-        sessions[esock].buf[sessions[esock].bytes_read] = 0;
+        sessions[index].bytes_read += n;
+        sessions[index].buf[sessions[index].bytes_read] = 0; // null terminate string
         printf("Read %d bytes!\n", n);
-        if((sb = strstr(sessions[esock].buf, "\r\n\r\n")) != NULL) {
-          if(strncmp("GET ", sessions[esock].buf, 3) == 0 ) sessions[esock].bytes_left_to_read = 0;
+        if((sb = strstr(sessions[index].buf, "\r\n\r\n")) != NULL) {
+          if(strncmp("GET ", sessions[index].buf, 3) == 0 ) sessions[index].bytes_left_to_read = 0;
           sb += 4; // Skip past \r\n\r\n
-          cl = strstr(sessions[esock].buf, "Content-Length:");
+          cl = strstr(sessions[index].buf, "Content-Length:");
           if(cl != NULL ) {
-            cl += 15; // Jump past header name
+        	cl += 15; // Jump past header name
             while(*cl == ' ') cl++; // Skip optional space
             cle = strstr(cl, "\r\n");
             strncpy(clbuf, cl, cle-cl);
             clbuf[cle-cl+1] = (char)0;
             content_length=atoi(clbuf);
-            sessions[esock].bytes_left_to_read = content_length - (sessions[esock].bytes_read - (sb - sessions[esock].buf));
+            sessions[index].bytes_left_to_read = content_length - (sessions[index].bytes_read - (sb - sessions[index].buf));
           }
           
-          if(sessions[esock].bytes_left_to_read-n < 1) {
+          //TODO: fix socket here. And ofd!
+          if(sessions[index].bytes_left_to_read-n < 1) {
             printf("My-Content-Length: %d\n", content_length);
-            write(1, sessions[esock].buf, sessions[esock].bytes_read);
-            write(sessions[esock].ofd, sessions[esock].buf, sessions[esock].bytes_read);
-            write(esock, "HTTP/1.1 200 OK\r\n\r\n", 19);
-            close_connection(sessions, esock);
+            write(1, sessions[index].buf, sessions[index].bytes_read);
+            write(sessions[index].ofd, sessions[index].buf, sessions[index].bytes_read);
+            write(index, "HTTP/1.1 200 OK\r\n\r\n", 19);
+            																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																			close_connection(sessions, esock);
           }
         }
       }
