@@ -9,9 +9,6 @@
 #include "poll.h"
 #include "sessions.h"
 
-
-
-
 int close_connection( session_t sessions[], int esock) {
   printf("Closing connection %d\n", esock);
   close(esock); // Socket is automatically deregistered from /dev/poll on close */
@@ -51,7 +48,7 @@ int main(int argc, char *argv[]) {
   
   printf("logpath=%s\n", logpath );
   
-  session_t sessions[65536];
+  session_t sessions[NFDS];
   
   //char buf[2048];
   //int  bufsize=2048;
@@ -145,7 +142,7 @@ int main(int argc, char *argv[]) {
       } else {
         
         printf("Ska läsa socket %d!\n", esock);
-n = read(esock, sessions[index].buf+sessions[index].bytes_read, sessions[index].bytes_left_to_read);
+        n = read(esock, sessions[index].buf+sessions[index].bytes_read, sessions[index].bytes_left_to_read);
         if(n < 0) {
           perror("read esock")	;
         }

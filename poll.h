@@ -1,5 +1,7 @@
 #include <poll.h>
 
+#define NFDS 100
+
 #define POLL_OK       0
 #define POLL_EFULL    1
 #define POLL_NFOUND   2

@@ -1,6 +1,6 @@
 #include "poll.h"
 
-#define NFDS 100
+
 
 struct pollfd fds[NFDS];
 int highest_index = -1;
