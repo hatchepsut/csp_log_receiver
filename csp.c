@@ -7,14 +7,9 @@
 #include <unistd.h>
 #include <string.h>
 #include "poll.h"
+#include "sessions.h"
 
 
-typedef struct {
-  int ofd; // File descriptor for out file
-  int bytes_read;
-  int bytes_left_to_read;
-  char *buf;
-} session_t;
 
 
 int close_connection( session_t sessions[], int esock) {
@@ -31,21 +26,14 @@ int main(int argc, char *argv[]) {
   int err, n;
   int nsocks;
   //int evpfd;
-  int lsock, csock, esock;
+  int lsock, esock;
   int lognr=0;
   int pid;
   
   char *logpath=".";
   
-  //ssize_t retval;
-  
-  // kqueue
-  //int kq;
-  //struct kevent evSet;
-  
-  char c;
   extern int optind, optopt;
-  
+  char c;
   while ((c = getopt(argc, argv, "td:")) != -1) {
     switch (c) {
       case 'd':
@@ -83,17 +71,6 @@ int main(int argc, char *argv[]) {
   
   pid = getpid();
   
-  //fdset = (struct pollfd *)malloc(sizeof(struct pollfd) * 100);
-  //if(fdset == NULL) {
-  //    perror("mallox");
-  //    exit(1);;
-  //}
-  
-  
-  //evpfd = open("/dev/poll", O_RDWR);
-  
-  
-  
   proto = getprotobyname("TCP");
   lsock = socket(AF_INET, SOCK_STREAM, proto->p_proto);
   
@@ -129,21 +106,20 @@ int main(int argc, char *argv[]) {
     
     if(nsocks == 0) continue;
     
-    for(int i=0; i < poll_size(); i++) {
+    for(int index=0; index < poll_size(); index++) {
       
       
-      int events = poll_check_event(i);
+      int events = poll_check_event(index);
       
       if(events != 1) continue;
       
-      esock = poll_get_fd(i);
-      
-      
+
+      esock = poll_get_fd(index);
       
       if( esock == lsock ) {
         
         /* Accept new connection and register socket to /dev/poll */
-        csock = accept(lsock, NULL, 0);
+        int csock = accept(lsock, NULL, 0);
         if(csock < 0) {
           perror("write register csock");
           exit(1);
@@ -173,24 +149,30 @@ int main(int argc, char *argv[]) {
         if(n < 0) {
           perror("read esock");
         }
+
+        if(n == 0) {
+        	close_connection(sessions, esock);
+        	continue;
+        }
+
         sessions[esock].bytes_read += n;
-        sessions[esock].buf[sessions[esock].bytes_read] = NULL;
+        sessions[esock].buf[sessions[esock].bytes_read] = 0;
         printf("Read %d bytes!\n", n);
-        if(sb = strstr(sessions[esock].buf, "\r\n\r\n")) {
+        if((sb = strstr(sessions[esock].buf, "\r\n\r\n")) != NULL) {
           if(strncmp("GET ", sessions[esock].buf, 3) == 0 ) sessions[esock].bytes_left_to_read = 0;
           sb += 4; // Skip past \r\n\r\n
           cl = strstr(sessions[esock].buf, "Content-Length:");
-          if(cl > NULL) {
+          if(cl != NULL ) {
             cl += 15; // Jump past header name
             while(*cl == ' ') cl++; // Skip optional space
             cle = strstr(cl, "\r\n");
             strncpy(clbuf, cl, cle-cl);
-            clbuf[cle-cl+1] = NULL;
+            clbuf[cle-cl+1] = (char)0;
             content_length=atoi(clbuf);
             sessions[esock].bytes_left_to_read = content_length - (sessions[esock].bytes_read - (sb - sessions[esock].buf));
           }
           
-          if(sessions[csock].bytes_left_to_read-n < 1) {
+          if(sessions[esock].bytes_left_to_read-n < 1) {
             printf("My-Content-Length: %d\n", content_length);
             write(1, sessions[esock].buf, sessions[esock].bytes_read);
             write(sessions[esock].ofd, sessions[esock].buf, sessions[esock].bytes_read);
