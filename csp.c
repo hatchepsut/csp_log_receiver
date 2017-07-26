@@ -9,12 +9,17 @@
 #include "poll.h"
 #include "sessions.h"
 
-int close_connection( session_t sessions[], int esock) {
-  printf("Closing connection %d\n", esock);
-  close(esock); // Socket is automatically deregistered from /dev/poll on close */
-  close(sessions[esock].ofd);
-  free(sessions[esock].buf);
-  poll_remove_fd(esock);
+int close_connection( session_t sessions[], int index) {
+  int sock;
+
+
+  sock = poll_get_fd(index);
+
+  printf("Closing connection %d and removing session %d\n", sock, index);
+  close(sock);
+  close(sessions[index].ofd);
+  free(sessions[index].buf);
+  poll_remove_fd(sock);
   return(0);
 }
 
@@ -170,13 +175,12 @@ int main(int argc, char *argv[]) {
             sessions[index].bytes_left_to_read = content_length - (sessions[index].bytes_read - (sb - sessions[index].buf));
           }
           
-          //TODO: fix socket here. And ofd!
           if(sessions[index].bytes_left_to_read-n < 1) {
             printf("My-Content-Length: %d\n", content_length);
-            write(1, sessions[index].buf, sessions[index].bytes_read);
+            //write(esock, sessions[index].buf, sessions[index].bytes_read);
             write(sessions[index].ofd, sessions[index].buf, sessions[index].bytes_read);
-            write(index, "HTTP/1.1 200 OK\r\n\r\n", 19);
-            																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																			close_connection(sessions, esock);
+            write(esock, "HTTP/1.1 200 OK\r\n\r\n", 19);
+            close_connection(sessions, index);
           }
         }
       }
