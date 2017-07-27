@@ -27,6 +27,7 @@ int sessions_init() {
 		sessions[i].buf = malloc(BUFSIZE);
 		memset(sessions[i].buf, 0, BUFSIZE);
 	}
+	return(0);
 }
 
 int sessions_add(int index, int sock) {
@@ -69,12 +70,12 @@ int sessions_process(int index) {
 	char clbuf[16];
 	int content_length;
 
-	printf("Ska läsa socket %d!\n", sessions[index].fd);
+	//fprintf(stderr, "Ska läsa socket %d!\n", sessions[index].fd);
 
 	char *bufptr = sessions[index].buf+sessions[index].bytes_read;
   int n = read(sessions[index].fd, bufptr, sessions[index].bytes_left_to_read);
   if(n < 0) {
-    printf("error: read socket %d\n\n", sessions[index].fd);
+    //fprintf(stderr, "error: read socket %d\n\n", sessions[index].fd);
     return(n);
 	}
 
@@ -86,7 +87,7 @@ int sessions_process(int index) {
 
   sessions[index].bytes_read += n;
   sessions[index].buf[sessions[index].bytes_read] = 0; // null terminate string
-  printf("Read %d bytes!\n", n);
+  //fprintf(stderr, "Read %d bytes!\n", n);
   if((sb = strstr(sessions[index].buf, "\r\n\r\n")) != NULL) {
 		// GET requests are allowed to have a body. So we must read it if it has.
   	//if(strncmp("GET ", sessions[index].buf, 3) == 0 ) sessions[index].bytes_left_to_read = 0;
@@ -103,7 +104,7 @@ int sessions_process(int index) {
     }
 
     if(sessions[index].bytes_left_to_read-n < 1) {
-      printf("My-Content-Length: %d\n", content_length);
+      //fprintf(stderr, "My-Content-Length: %d\n", content_length);
       //write(esock, sessions[index].buf, sessions[index].bytes_read);
 
       log_write(sessions[index].buf, sessions[index].bytes_read);

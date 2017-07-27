@@ -12,25 +12,11 @@
 #include "sessions.h"
 #include "log.h"
 
-int close_connection( session_t sessions[], int index) {
-  int sock;
-
-
-  sock = poll_get_fd(index);
-
-  printf("Closing connection %d and removing session %d\n", sock, index);
-  close(sock);
-  close(sessions[index].fd);
-  free(sessions[index].buf);
-  poll_remove_fd(sock);
-  return(0);
-}
 
 static void problem(int signum)
 {
   char buf[256];
-  sprintf(buf, "Problem signal %d!\n", signum);
-  fprintf(stderr, buf);
+  fprintf(stderr, "Problem signal %d!\n", signum);
   exit(-1);
 }
 
@@ -121,8 +107,10 @@ int main(int argc, char *argv[]) {
   }
 
   // Daemonize here
-  for (int fd = 0; fd < 256; fd++)
-    close(fd); /* close all file descriptors */
+
+    close(0);
+    close(1);
+    
 
 
   pid = fork();
@@ -135,15 +123,19 @@ int main(int argc, char *argv[]) {
 
   setsid(); // Child becomed session leader 
 
+
   pid = fork();
   if(pid > 0) exit(0); // Let parent terminate
   if(pid < 0) {
-    perror("Can't fork! (second)");
+    fprintf(stderr, "Can't fork! (second)");
     exit(-1);
   }
  
+  int newfd = open("error.log", O_CREAT|O_WRONLY, 0755);
+  dup2(newfd, 2);
 
-  printf("logpath=%s\n", logpath );
+
+  fprintf(stderr, "logpath=%s\n", logpath );
   
   int content_length=0;
   char clbuf[16];
@@ -185,7 +177,7 @@ int main(int argc, char *argv[]) {
   poll_init();
   int ret = poll_add_fd(lsock);
   if(ret == POLL_EFULL) {
-    printf("poll queue is full!\n");
+    fprintf(stderr, "poll queue is full!\n");
     exit(1);
   }
   
@@ -193,7 +185,7 @@ int main(int argc, char *argv[]) {
 
     nsocks = poll_wait_for_event();
 
-    printf("nsocks = %d\n", nsocks);
+    //fprintf(stderr, "nsocks = %d\n", nsocks);
 
     if(nsocks == 0) continue;
 
@@ -220,16 +212,12 @@ int main(int argc, char *argv[]) {
 	    } else {
 
 		    n = sessions_process(index);
-
 		    if(n == 0) {
-
-			    /* printf("Nu säger read 0. Jag tar bort sessionen!\n"); */
 			    sessions_remove(index);
-
 		    }
 	    }
 
-	    printf("Loopar runt!\n");
+	    //fprintf(stderr, "Loopar runt!\n");
     }
   }
 }
