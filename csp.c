@@ -27,11 +27,10 @@ int close_connection( session_t sessions[], int index) {
 int main(int argc, char *argv[]) {
   int err, n;
   int nsocks;
-  //int evpfd;
   int lsock, esock;
   int lognr=0;
   int pid;
-  
+
   char *logpath=".";
   
   extern int optind, optopt;
@@ -128,25 +127,11 @@ int main(int argc, char *argv[]) {
         }
         
         int eindex = poll_add_fd(csock);
-        
-        // Create out filed */
-        peer_addr_length = sizeof( struct sockaddr_in);
-        n = getpeername(csock, (struct sockaddr *)&peer_addr, &peer_addr_length);
-        if(n != 0) perror("getpeername");
-        
-        sprintf(ofile, "%s/csplog-%u-%d-%d.log", logpath, peer_addr.sin_addr.s_addr, pid, lognr++);
-        printf("ofile: %s\n", ofile);
-        ofd = open(ofile, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
-        
-        sessions[eindex].ofd = ofd;
-        sessions[eindex].bytes_read = 0;
-        sessions[eindex].bytes_left_to_read = 4096;
-        sessions[eindex].buf = malloc(4096);
-        memset(sessions[eindex].buf, 0, 4096);
-        
+        sessions_add(eindex, csock);
+
       } else {
         
-        printf("Ska läsa socket %d!\n", esock);
+				printf("Ska läsa socket %d!\n", esock);
         n = read(esock, sessions[index].buf+sessions[index].bytes_read, sessions[index].bytes_left_to_read);
         if(n < 0) {
           perror("read esock")	;
@@ -162,7 +147,9 @@ int main(int argc, char *argv[]) {
         sessions[index].buf[sessions[index].bytes_read] = 0; // null terminate string
         printf("Read %d bytes!\n", n);
         if((sb = strstr(sessions[index].buf, "\r\n\r\n")) != NULL) {
-          if(strncmp("GET ", sessions[index].buf, 3) == 0 ) sessions[index].bytes_left_to_read = 0;
+
+					// GET requests are allowed to have a body. So we must read it if it has.
+        	//if(strncmp("GET ", sessions[index].buf, 3) == 0 ) sessions[index].bytes_left_to_read = 0;
           sb += 4; // Skip past \r\n\r\n
           cl = strstr(sessions[index].buf, "Content-Length:");
           if(cl != NULL ) {
