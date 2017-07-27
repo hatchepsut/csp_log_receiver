@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdio.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -8,6 +9,7 @@
 #include <string.h>
 #include "poll.h"
 #include "sessions.h"
+#include "log.h"
 
 int close_connection( session_t sessions[], int index) {
   int sock;
@@ -17,7 +19,7 @@ int close_connection( session_t sessions[], int index) {
 
   printf("Closing connection %d and removing session %d\n", sock, index);
   close(sock);
-  close(sessions[index].ofd);
+  close(sessions[index].fd);
   free(sessions[index].buf);
   poll_remove_fd(sock);
   return(0);
@@ -49,13 +51,35 @@ int main(int argc, char *argv[]) {
     }
     
   }
-  
+
+#if DAEMON
+  // Daemonize here
+  for (int fd = 0; fd < 256; fd++)
+    close(fd); /* close all file descriptors */
+
+  // signal(SIGHUP, NULL);
+  // signal(SIGCHLD, NULL);
+
+  pid = fork();
+  if(pid > 0) exit(0); // Let parent terminate
+
+  if(pid < 0) {
+    perror("Can't fork! (first)");
+    exit(-1);
+  }
+
+  setsid(); // Child becomed session leader 
+
+  pid = fork();
+  if(pid > 0) exit(0); // Let parent terminate
+  if(pid < 0) {
+    perror("Can't fork! (second)");
+    exit(-1);
+  }
+#endif
+ 
   printf("logpath=%s\n", logpath );
   
-  session_t sessions[NFDS];
-  
-  //char buf[2048];
-  //int  bufsize=2048;
   int content_length=0;
   char clbuf[16];
   char *sb, *cl, *cle;
@@ -72,6 +96,8 @@ int main(int argc, char *argv[]) {
   
   pid = getpid();
   
+  log_new_output_file("kalle");
+
   proto = getprotobyname("TCP");
   lsock = socket(AF_INET, SOCK_STREAM, proto->p_proto);
   
@@ -101,83 +127,44 @@ int main(int argc, char *argv[]) {
   while(1) {
 
     nsocks = poll_wait_for_event();
-    
-    
-	printf("nsocks = %d\n", nsocks);
-    
+
+    printf("nsocks = %d\n", nsocks);
+
     if(nsocks == 0) continue;
-    
+
     for(int index=0; index < poll_size(); index++) {
-      
-      
-      int events = poll_check_event(index);
-      
-	  if(events != 1) continue;
-      
 
-      esock = poll_get_fd(index);
-      
-      if( esock == lsock ) {
-        
-        /* Accept new connection and register socket to /dev/poll */
-        int csock = accept(lsock, NULL, 0);
-        if(csock < 0) {
-          perror("write register csock");
-          exit(1);
-        }
-        
-        int eindex = poll_add_fd(csock);
-        sessions_add(eindex, csock);
+	    int events = poll_check_event(index);
 
-      } else {
-        
-				printf("Ska läsa socket %d!\n", esock);
-        n = read(esock, sessions[index].buf+sessions[index].bytes_read, sessions[index].bytes_left_to_read);
-        if(n < 0) {
-          perror("read esock")	;
-        }
+	    if(events != 1) continue;
 
-        if(n == 0) {
-        	// Kan inte stänga här efter som klineten kan göra en halvstängning. Måste alltid skicka response.
-        	close_connection(sessions, index);
-        	continue;
-        }
+	    esock = poll_get_fd(index);
 
-        sessions[index].bytes_read += n;
-        sessions[index].buf[sessions[index].bytes_read] = 0; // null terminate string
-        printf("Read %d bytes!\n", n);
-        if((sb = strstr(sessions[index].buf, "\r\n\r\n")) != NULL) {
+	    if( esock == lsock ) {
 
-					// GET requests are allowed to have a body. So we must read it if it has.
-        	//if(strncmp("GET ", sessions[index].buf, 3) == 0 ) sessions[index].bytes_left_to_read = 0;
-          sb += 4; // Skip past \r\n\r\n
-          cl = strstr(sessions[index].buf, "Content-Length:");
-          if(cl != NULL ) {
-        	cl += 15; // Jump past header name
-            while(*cl == ' ') cl++; // Skip optional space
-            cle = strstr(cl, "\r\n");
-            strncpy(clbuf, cl, cle-cl);
-            clbuf[cle-cl+1] = (char)0;
-            content_length=atoi(clbuf);
-            sessions[index].bytes_left_to_read = content_length - (sessions[index].bytes_read - (sb - sessions[index].buf));
-          }
-          
-          if(sessions[index].bytes_left_to_read-n < 1) {
-            printf("My-Content-Length: %d\n", content_length);
-            //write(esock, sessions[index].buf, sessions[index].bytes_read);
-            write(sessions[index].ofd, sessions[index].buf, sessions[index].bytes_read);
-            write(esock, "HTTP/1.1 200 OK\r\n\r\n", 19);
-            close_connection(sessions, index);
-          }
-        }
-      }
-      printf("Loopar runt!\n");
+		    /* Accept new connection and register socket to /dev/poll */
+		    int csock = accept(lsock, NULL, 0);
+		    if(csock < 0) {
+			    perror("write register csock");
+			    exit(1);
+		    }
+
+		    int eindex = poll_add_fd(csock);
+		    sessions_add(eindex, csock);
+
+	    } else {
+
+		    n = sessions_process(index);
+
+		    if(n == 0) {
+
+			    /* printf("Nu säger read 0. Jag tar bort sessionen!\n"); */
+			    sessions_remove(index);
+
+		    }
+	    }
+
+	    printf("Loopar runt!\n");
     }
-    
-    
   }
-  
-  
-  // int write(int filedes, const struct pollfd *buf, size_t nbyte);
-  
 }

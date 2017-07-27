@@ -1,7 +1,7 @@
 all:: csp testfd testlog
 
-csp: poll.c csp.c
-	gcc -g -o csp csp.c poll.c sessions.c
+csp: log.c poll.c csp.c
+	gcc -g -o csp csp.c poll.c sessions.c log.c
 
 testfd: poll.c testfd.c
 	gcc -g -o testfd poll.c testfd.c
