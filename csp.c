@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include "poll.h"
 #include "sessions.h"
 #include "log.h"
@@ -23,6 +24,14 @@ int close_connection( session_t sessions[], int index) {
   free(sessions[index].buf);
   poll_remove_fd(sock);
   return(0);
+}
+
+static void problem(int signum)
+{
+  char buf[256];
+  sprintf(buf, "Problem signal %d!\n", signum);
+  fprintf(stderr, buf);
+  exit(-1);
 }
 
 
@@ -52,13 +61,69 @@ int main(int argc, char *argv[]) {
     
   }
 
-#if DAEMON
+  /* Set up signalhandlning to support logfile rotation */
+  struct sigaction sa1, sa2, sa3, sa_ign, *sa;
+
+  //sa1.sa_handler = logrotate;
+  //sigemptyset(&sa1.sa_mask);
+  //sa1.sa_flags = SA_RESTART;
+
+  sa2.sa_handler = problem;
+  sigemptyset(&sa2.sa_mask);
+  sa2.sa_flags = SA_RESTART;
+
+  //sa3.sa_handler = exit_program;
+  //sigemptyset(&sa3.sa_mask);
+  //sa3.sa_flags = SA_RESTART;
+
+  sa_ign.sa_handler = SIG_IGN;
+  sigemptyset(&sa_ign.sa_mask);
+  sa_ign.sa_flags = SA_RESTART;
+
+  for(int signum=1; signum <= 30; signum++) {
+    switch(signum) {
+      //case SIGALRM:
+      //  sa = &sa1;
+      //  break;
+
+      case SIGSEGV:
+        continue;
+        break;
+
+      case SIGKILL:
+        continue;
+        break;
+
+      case SIGHUP:
+        sa = &sa_ign;
+        break;
+
+      case SIGSTOP:
+        sa = NULL;
+        break;
+
+      case SIGPIPE:
+    	sa = &sa_ign;
+        break;
+
+      //case SIGTERM:
+      //  sa = &sa3;
+      //  break;
+
+      default:
+        sa = &sa2;
+        break;
+    }
+
+    if(sigaction( signum, sa, NULL) == -1) {
+      fprintf(stderr, "Can't install signalhandler for %d\n", signum );
+    }
+  }
+
   // Daemonize here
   for (int fd = 0; fd < 256; fd++)
     close(fd); /* close all file descriptors */
 
-  // signal(SIGHUP, NULL);
-  // signal(SIGCHLD, NULL);
 
   pid = fork();
   if(pid > 0) exit(0); // Let parent terminate
@@ -76,8 +141,8 @@ int main(int argc, char *argv[]) {
     perror("Can't fork! (second)");
     exit(-1);
   }
-#endif
  
+
   printf("logpath=%s\n", logpath );
   
   int content_length=0;
