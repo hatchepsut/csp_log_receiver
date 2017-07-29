@@ -12,4 +12,6 @@ int poll_remove_fd(int fd);
 int poll_size();
 int poll_wait_for_event();
 int poll_get_fd(int index);
-int poll_check_event(int index);
+short int poll_check_event(int index);
+struct pollfd *poll_get_struct();
+int poll_close_all_sockets();

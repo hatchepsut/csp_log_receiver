@@ -8,17 +8,22 @@
 #ifndef SESSIONS_H_
 #define SESSIONS_H_
 
+#include <time.h>
+
 typedef struct  {
   int fd; // File descriptor for out file
   int bytes_read;
   int bytes_left_to_read;
   int index;
   char *buf;
+  time_t stime;
 } session_t;
 
 int sessions_init();
 int sessions_add(int index, int sock);
 int sessions_process(int index);
 int sessions_remove(int index);
+void session_remove_old_sessions();
+void sessions_set_timeout(int t);
 
 #endif /* SESSIONS_H_ */
