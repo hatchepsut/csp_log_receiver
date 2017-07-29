@@ -14,14 +14,12 @@
 #include "log.h"
 
 static void exit_program(int signum) {
-  char buf[256];
   fprintf(stderr, "exit_program signal %d!\n", signum);
   poll_close_all_sockets();
   exit(-1);
 }
 
 static void problem(int signum) {
-  char buf[256];
   fprintf(stderr, "Problem signal %d!\n", signum);
   exit(-1);
 }
@@ -66,15 +64,11 @@ int main(int argc, char *argv[]) {
   }
 
   /* Set up signalhandlning to support logfile rotation */
-  struct sigaction sa1, sa2, sa3, sa_ign, *sa;
+  struct sigaction sa_def, sa3, sa_ign, *sa;
 
-  //sa1.sa_handler = logrotate;
-  //sigemptyset(&sa1.sa_mask);
-  //sa1.sa_flags = SA_RESTART;
-
-  sa2.sa_handler = problem;
-  sigemptyset(&sa2.sa_mask);
-  sa2.sa_flags = SA_RESTART;
+  sa_def.sa_handler = problem;
+  sigemptyset(&sa_def.sa_mask);
+  sa_def.sa_flags = SA_RESTART;
 
   sa3.sa_handler = exit_program;
   sigemptyset(&sa3.sa_mask);
@@ -86,9 +80,6 @@ int main(int argc, char *argv[]) {
 
   for (int signum = 1; signum <= 30; signum++) {
     switch (signum) {
-    //case SIGALRM:
-    //  sa = &sa1;
-    //  break;
 
     case SIGSEGV:
       continue;
@@ -119,7 +110,7 @@ int main(int argc, char *argv[]) {
       break;
 
     default:
-      sa = &sa2;
+      sa = &sa_def;
       break;
     }
 
@@ -158,18 +149,11 @@ int main(int argc, char *argv[]) {
 
   fprintf(stderr, "logpath=%s\n", logpath);
 
-  int content_length = 0;
-  char clbuf[16];
-  char *sb, *cl, *cle;
-
-  int ofd;
   char *ofile;
 
   struct protoent *proto;
 
   struct sockaddr_in serv_addr;
-  struct sockaddr_in peer_addr;
-  socklen_t peer_addr_length;
 
   pid = getpid();
 
@@ -218,10 +202,7 @@ int main(int argc, char *argv[]) {
     }
  
     nsocks = poll_wait_for_event();
-
     session_remove_old_sessions();
-
-    /*fprintf(stderr, "nsocks = %d\n", nsocks);*/
 
     if (nsocks == 0) {
       session_remove_old_sessions();
@@ -232,20 +213,11 @@ int main(int argc, char *argv[]) {
 
       int events = poll_check_event(index);
 
-
-
-
-
-
-      struct pollfd *pfd;
-      pfd = poll_get_struct();
-
       esock = poll_get_fd(index);
 
       if (events != 1) {
         continue;
       }
-
 
       if (esock == lsock) {
 

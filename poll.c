@@ -77,7 +77,7 @@ struct pollfd *poll_get_struct() {
   return(fds);
 }
 
-int poll_close_all_sockets() {
+void poll_close_all_sockets() {
   for(int i=0; i < NFDS; i++) {
     if(fds[i].fd == -1) continue;
     printf("Closing %d(%d)\n", fds[i].fd, i);
