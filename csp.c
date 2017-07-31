@@ -16,7 +16,9 @@
 int open_output_file() {
   char *ofile;
   int pid;
-  static int lognr  = 1;
+  static int lognr  = 0;
+
+  lognr++; /* increment lognr to start with a new file. Used with log rotation. */
 
   pid = getpid();
 	ofile = malloc(1024);
