@@ -8,12 +8,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <time.h>
 #include "poll.h"
 #include "sessions.h"
 #include "log.h"
 
-int open_output_file() {
+void open_output_file() {
   char *ofile;
   int pid;
   static int lognr  = 0;
@@ -22,10 +21,9 @@ int open_output_file() {
 
   pid = getpid();
 	ofile = malloc(1024);
-  sprintf(ofile, "csplog-%d-%d.log", pid, lognr++);
+  sprintf(ofile, "csplog-%d-%d.log", pid, lognr);
   log_new_output_file(ofile);
   free(ofile);
-  return(0);
 }
 
 static void exit_program(int signum) {
@@ -78,7 +76,11 @@ int main(int argc, char *argv[]) {
   }
 
   /* Set up signalhandlning to support logfile rotation */
-  struct sigaction sa_def, sa3, sa_ign, *sa;
+  struct sigaction sa_hup, sa_def, sa3, sa_ign, *sa;
+
+  sa_hup.sa_handler = open_output_file;
+  sigemptyset(&sa_hup.sa_mask);
+  sa_hup.sa_flags = SA_RESTART;
 
   sa_def.sa_handler = problem;
   sigemptyset(&sa_def.sa_mask);
@@ -104,7 +106,7 @@ int main(int argc, char *argv[]) {
       break;
 
     case SIGHUP:
-      sa = &sa_ign;
+      sa = &sa_hup;
       break;
 
     case SIGSTOP:

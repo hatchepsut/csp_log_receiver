@@ -123,7 +123,10 @@ int sessions_process(int index) {
 
       // Don't log request with no data. Healthcheck and such.
       if(content_length > 0) {
-        log_write(sessions[index].buf, sessions[index].bytes_read);
+      	struct timespec st;
+      	st = sessions_get_start_time(index);
+
+        log_write(st, sessions[index].buf, sessions[index].bytes_read);
       }
 
       write(sessions[index].fd, "HTTP/1.1 200 OK\r\n\r\n", 19);
@@ -132,4 +135,18 @@ int sessions_process(int index) {
   }
   return(sessions[index].bytes_read);
 }
+
+ int sessions_set_start_time(int index)  {
+	struct timespec st;
+
+	clock_gettime(CLOCK_REALTIME, &st);
+	sessions[index].st = st;
+
+	return(0);
+}
+
+struct timespec sessions_get_start_time(int index) {
+	return sessions[index].st;
+}
+
 

@@ -17,13 +17,16 @@ typedef struct  {
   int index;
   char *buf;
   time_t stime;
+  struct timespec st;
 } session_t;
 
-int sessions_init();
-int sessions_add(int index, int sock);
-int sessions_process(int index);
-int sessions_remove(int index);
-void session_remove_old_sessions();
-void sessions_set_timeout(int t);
+int							sessions_init();
+int							sessions_add(int index, int sock);
+int							sessions_process(int index);
+int							sessions_remove(int index);
+void						session_remove_old_sessions();
+void 						sessions_set_timeout(int t);
+int							sessions_set_start_time(int index);
+struct timespec	sessions_get_start_time(int index);
 
 #endif /* SESSIONS_H_ */

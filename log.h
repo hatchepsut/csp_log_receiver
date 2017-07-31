@@ -10,6 +10,8 @@
 
 int   log_set_log_location(char *dir);
 int   log_new_output_file(char *name);
-int   log_write(char *data, int len);
+int   log_write(struct timespec st, char *data, int len);
+int 	set_log_time();
+struct timespec get_log_time();
 
 #endif /* LOG_H_ */
