@@ -39,15 +39,23 @@ void sessions_set_timeout(int t) {
   timeout = t;
 }
 
-int sessions_add(int index, int sock) {
+int sessions_add(int sock) {
 
-  int n;
-  struct sockaddr_in peer_addr;
-  socklen_t peer_addr_length;
+	struct timespec st;
+  //int n;
+  //struct sockaddr_in peer_addr;
+  //socklen_t peer_addr_length;
 
-  peer_addr_length = sizeof( struct sockaddr_in);
-  n = getpeername(sock, (struct sockaddr *)&peer_addr, &peer_addr_length);
-  if(n != 0) perror("getpeername");
+  //peer_addr_length = sizeof( struct sockaddr_in);
+  //n = getpeername(sock, (struct sockaddr *)&peer_addr, &peer_addr_length);
+  //if(n != 0) perror("getpeername");
+
+  int index = poll_add_fd(sock);
+  if(index < 0) {
+    fprintf(stderr, "poll queue is full!\n");
+    exit(1);
+  }
+
 
   sessions[index].fd = sock;
   sessions[index].bytes_read = 0;
@@ -55,6 +63,9 @@ int sessions_add(int index, int sock) {
   sessions[index].buf = malloc(BUFSIZE);
   sessions[index].stime = time(0);
   //memset(sessions[index].buf, 0, BUFSIZE);
+
+	clock_gettime(CLOCK_REALTIME, &st);
+	sessions[index].st = st;
 
   return(0);
 }
@@ -136,12 +147,7 @@ int sessions_process(int index) {
   return(sessions[index].bytes_read);
 }
 
- int sessions_set_start_time(int index)  {
-	struct timespec st;
-
-	clock_gettime(CLOCK_REALTIME, &st);
-	sessions[index].st = st;
-
+int sessions_set_start_time(int index)  {
 	return(0);
 }
 

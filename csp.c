@@ -238,13 +238,7 @@ int main(int argc, char *argv[]) {
           exit(1);
         }
 
-        int eindex = poll_add_fd(csock);
-        if(eindex < 0) {
-        	fprintf(stderr, "poll queue is full!\n");
-        	exit(1);
-        }
-
-        sessions_add(eindex, csock);
+        sessions_add(csock);
 
       } else {
 

@@ -21,7 +21,7 @@ typedef struct  {
 } session_t;
 
 int							sessions_init();
-int							sessions_add(int index, int sock);
+int							sessions_add(int sock);
 int							sessions_process(int index);
 int							sessions_remove(int index);
 void						session_remove_old_sessions();
