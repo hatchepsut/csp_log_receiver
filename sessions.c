@@ -43,7 +43,7 @@ int sessions_add(int index, int sock) {
 
   int n;
   struct sockaddr_in peer_addr;
-  int peer_addr_length;
+  socklen_t peer_addr_length;
 
   peer_addr_length = sizeof( struct sockaddr_in);
   n = getpeername(sock, (struct sockaddr *)&peer_addr, &peer_addr_length);
@@ -51,10 +51,10 @@ int sessions_add(int index, int sock) {
 
   sessions[index].fd = sock;
   sessions[index].bytes_read = 0;
-  sessions[index].bytes_left_to_read = 4096;
-  sessions[index].buf = malloc(4096);
+  sessions[index].bytes_left_to_read = BUFSIZE;
+  sessions[index].buf = malloc(BUFSIZE);
   sessions[index].stime = time(0);
-  memset(sessions[index].buf, 0, 4096);
+  //memset(sessions[index].buf, 0, BUFSIZE);
 
   return(0);
 }
@@ -63,9 +63,9 @@ int sessions_remove(int index) {
 
   poll_remove_fd(sessions[index].fd); /* Remove fed from poll structure. */
   close(sessions[index].fd);
-  memset(sessions[index].buf, 0, 4096);
+  //memset(sessions[index].buf, 0, BUFSIZE);
   if(sessions[index].buf) free(sessions[index].buf);
-  memset(&sessions[index], 0, sizeof(session_t));
+  //memset(&sessions[index], 0, sizeof(session_t));
   sessions[index].fd = -1; // Indication of not used session structure
 
   return(0);

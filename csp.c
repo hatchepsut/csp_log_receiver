@@ -13,6 +13,19 @@
 #include "sessions.h"
 #include "log.h"
 
+int open_output_file() {
+  char *ofile;
+  int pid;
+  static int lognr  = 1;
+
+  pid = getpid();
+	ofile = malloc(1024);
+  sprintf(ofile, "csplog-%d-%d.log", pid, lognr++);
+  log_new_output_file(ofile);
+  free(ofile);
+  return(0);
+}
+
 static void exit_program(int signum) {
   fprintf(stderr, "exit_program signal %d!\n", signum);
   poll_close_all_sockets();
@@ -29,7 +42,6 @@ int main(int argc, char *argv[]) {
   int nsocks;
   int lsock, esock;
   int lport = 8090;
-  int lognr = 0;
   int pid;
   time_t stime = time(0);
   char *timestr;
@@ -147,20 +159,14 @@ int main(int argc, char *argv[]) {
   int newfd = open(logfilename, O_CREAT | O_WRONLY | O_APPEND, 0755);
   dup2(newfd, 2);
 
-  fprintf(stderr, "logpath=%s\n", logpath);
-
-  char *ofile;
-
   struct protoent *proto;
 
   struct sockaddr_in serv_addr;
 
-  pid = getpid();
-
-  ofile = malloc(1024);
-  sprintf(ofile, "%s/csplog-%d-%d.log", logpath, pid, lognr++);
-  log_new_output_file(ofile);
-  free(ofile);
+  // Open output file
+  log_set_log_location(logpath);
+  fprintf(stderr, "logpath=%s\n", logpath);
+  open_output_file();
 
   proto = getprotobyname("TCP");
   lsock = socket(AF_INET, SOCK_STREAM, proto->p_proto);
@@ -229,6 +235,11 @@ int main(int argc, char *argv[]) {
         }
 
         int eindex = poll_add_fd(csock);
+        if(eindex < 0) {
+        	fprintf(stderr, "poll queue is full!\n");
+        	exit(1);
+        }
+
         sessions_add(eindex, csock);
 
       } else {
