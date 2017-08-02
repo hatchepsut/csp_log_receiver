@@ -7,6 +7,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <string.h>
 #include <time.h>
 #include "log.h"
@@ -14,17 +18,22 @@
 
 int main() {
 
-	char *data1 = "Detta är en logg!";
-	char *data2 = "Kort log!";
-	char *data3 = "Detta är en logg som är längre än dom andra!";
+  struct timespec st;
+  char data[4096];
+  int len=0;
 
-	struct timespec st;
+  int fd = open("csplog-6324-1.log", O_RDONLY, 0);
 
-	int n = clock_gettime(CLOCK_REALTIME, &st);
-  printf("clock_gettime returnerar %d\n", n );
+  printf("Opened csplog-6324-1.log as fd %d\n", fd);
 
-	log_new_output_file("kalle");
-	log_write(st, data1, strlen(data1));
-	log_write(st, data2, strlen(data2));
-	log_write(st, data3, strlen(data3));
+  do {
+
+  	len = log_read(fd, &st, data);
+
+  	printf("Len=%d\n++++++++++++++++++++++++++++++++\n", len);
+    fwrite(data, len, 1, stdout);
+    printf("\n----------------------------------\n");
+  } while(len > 0);
+
+  return(0);
 }

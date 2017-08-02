@@ -4,6 +4,7 @@
  *  Created on: Jul 27, 2017
  *      Author: peter
  */
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -11,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/uio.h>
+#include "log.h"
 
 char *directory = "./";
 char  output_file[256];
@@ -50,4 +52,49 @@ int log_write(struct timespec st, char *data, int len) {
 	ret = writev(ofd, iov, 3);
 
 	return(ret);
+}
+
+int log_read(int fd, struct timespec *st, char *data) {
+
+  char buf[1024];
+  int len, rd;
+  int hlen;
+
+  struct tm *tm;
+  struct iovec iov[2];
+
+
+  iov[0].iov_base = st;
+  iov[0].iov_len = (int)sizeof(struct timespec);
+
+  iov[1].iov_base = &hlen;
+  iov[1].iov_len = sizeof(int);
+
+  len = readv(fd, iov, 2);
+
+  if(len == 0) {
+  	printf("Nu är det slut eller så har allt gått åt helvete!\n");
+  	return(-1);
+  }
+
+  if(len != (sizeof(*st)+sizeof(hlen))) {
+  	printf("Fara och färde! len=%d st+hlen=%lu\n", len, sizeof(*st)+sizeof(hlen));
+  }
+
+  printf("hlen=%d\n", hlen);
+
+  rd = read(fd, data, hlen);
+
+  printf("rd=%d\n", rd );
+
+  tm = localtime(&(st->tv_sec));
+
+
+  strftime(buf, 1024, "%F %T", tm);
+
+  sprintf(buf, "%s.%ld", buf, st->tv_nsec);
+
+  printf("Tid:_%s\n", buf );
+
+  return(hlen);
 }
