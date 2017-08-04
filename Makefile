@@ -1,24 +1,29 @@
 CC = clang
 
 CFLAGS = -Wall -g
-ALL    = csp testfd testlog
+ALL    = csp testfd testlog testsessions
 
 all:: $(ALL)
 
-csp: log.c poll.c csp.c sessions.c
-	$(CC) $(CFLAGS) -o csp csp.c poll.c sessions.c log.c
+src = *.c
 
-testfd: poll.c testfd.c
-	$(CC) $(CFLAGS) -o testfd poll.c testfd.c
+.c.o:
+	cc $(CFLAGS) -c -o $@ $<
+
+csp: log.o poll.o sessions.o csp.c
+	$(CC) $(CFLAGS) -o csp log.o poll.o sessions.o csp.c
+
+testfd: poll.o testfd.c
+	$(CC) $(CFLAGS) -o testfd poll.o testfd.c
 	
-testsessions: sessions.c testsessions.c
-	$(CC) $(CFLAGS) -o testsessions sessions.c testsessions.c
+testsessions: log.o poll.o sessions.o testsessions.c
+	$(CC) $(CFLAGS) -o testsessions log.o poll.o sessions.o testsessions.c
 	
-testlog: log.c testlog.c
-	$(CC) $(CFLAGS) -o testlog log.c testlog.c
+testlog: log.o testlog.c
+	$(CC) $(CFLAGS) -o testlog log.o testlog.c
 	
 clean:
-	@rm -f *.o csp testfd testlog
+	@rm -f *.o $(ALL)
 
 cleanlogs:
 	@rm -f csplog-* error.log
