@@ -73,28 +73,20 @@ int log_read(int fd, struct timespec *st, char *data) {
   len = readv(fd, iov, 2);
 
   if(len == 0) {
-  	printf("Nu är det slut eller så har allt gått åt helvete!\n");
-  	return(-1);
+  	return(0);
   }
 
   if(len != (sizeof(*st)+sizeof(hlen))) {
-  	printf("Fara och färde! len=%d st+hlen=%lu\n", len, sizeof(*st)+sizeof(hlen));
+    return(-1);
   }
-
-  printf("hlen=%d\n", hlen);
 
   rd = read(fd, data, hlen);
 
-  printf("rd=%d\n", rd );
-
   tm = localtime(&(st->tv_sec));
-
 
   strftime(buf, 1024, "%F %T", tm);
 
   sprintf(buf, "%s.%ld", buf, st->tv_nsec);
-
-  printf("Tid:_%s\n", buf );
 
   return(hlen);
 }

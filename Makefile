@@ -1,6 +1,6 @@
 CC = clang
 
-CFLAGS = -Wall -g
+CFLAGS = -Wall -Wextra -Wpedantic -g
 ALL    = csp testfd testlog testsessions
 
 all:: $(ALL)

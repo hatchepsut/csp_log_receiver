@@ -147,10 +147,6 @@ int sessions_process(int index) {
   return(sessions[index].bytes_read);
 }
 
-int sessions_set_start_time(int index)  {
-	return(0);
-}
-
 struct timespec sessions_get_start_time(int index) {
 	return sessions[index].st;
 }

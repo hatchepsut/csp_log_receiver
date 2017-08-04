@@ -16,19 +16,26 @@
 #include "log.h"
 
 
-int main() {
+int main(int argc, char *argv[]) {
 
   struct timespec st;
   char data[4096];
   int len=0;
 
-  int fd = open("csplog-6324-1.log", O_RDONLY, 0);
+  int fd = open(argv[1], O_RDONLY, 0);
 
-  printf("Opened csplog-6324-1.log as fd %d\n", fd);
+  printf("Opened %s as fd %d\n", argv[argc], fd);
 
   do {
 
   	len = log_read(fd, &st, data);
+
+    if(len == 0 ) break;
+
+    if(len < 0 ) {
+      printf("error? WTF!!!\n");
+      return(-1);
+    }
 
   	printf("Len=%d\n++++++++++++++++++++++++++++++++\n", len);
     fwrite(data, len, 1, stdout);
