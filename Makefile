@@ -1,7 +1,7 @@
 CC = clang
 
 CFLAGS = -Wall -Wextra -Wpedantic -g
-ALL    = csp testfd testlog testsessions
+ALL    = csp testfd testlog testsessions testspace
 
 all:: $(ALL)
 
@@ -22,6 +22,9 @@ testsessions: log.o poll.o sessions.o testsessions.o
 testlog: log.o testlog.o
 	$(CC) $(CFLAGS) -o testlog log.o testlog.o
 
+testspace: testspace.o
+	$(CC) $(CFLAGS) -o testspace testspace.o
+	
 clean:
 	@rm -f *.o $(ALL)
 
