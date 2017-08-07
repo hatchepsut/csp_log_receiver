@@ -2,8 +2,8 @@ CC = clang
 
 CFLAGS = -Wall -Wextra -Wpedantic -g
 ALL    = csp testfd testlog testsessions testspace
-
-all:: $(ALL)
+SUBDIRS = lua
+all:: $(ALL) $(SUBDIRS)
 
 src = *.c
 
@@ -24,9 +24,16 @@ testlog: log.o testlog.o
 
 testspace: testspace.o
 	$(CC) $(CFLAGS) -o testspace testspace.o
+
+lua: force_look
+	@cd lua; make
 	
 clean:
 	@rm -f *.o $(ALL)
+	@cd lua; make clean
 
 cleanlogs:
 	@rm -f csplog-* error.log
+
+force_look:
+	@true
