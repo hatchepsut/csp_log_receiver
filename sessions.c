@@ -30,6 +30,7 @@ int sessions_init() {
     sessions[i].buf = (char *)0;
     sessions[i].stime = 0;
     sessions[i].fd = -1; // Indication of not used session structure
+    sessions[i].type = 0;
     lastrun = time(0);
   }
   return(0);
@@ -39,7 +40,7 @@ void sessions_set_timeout(int t) {
   timeout = t;
 }
 
-int sessions_add(int sock) {
+int sessions_add(int sock, int type) {
 
 	struct timespec st;
   //int n;
@@ -62,6 +63,7 @@ int sessions_add(int sock) {
   sessions[index].bytes_left_to_read = BUFSIZE;
   sessions[index].buf = malloc(BUFSIZE);
   sessions[index].stime = time(0);
+  sessions[index].type = type;
   //memset(sessions[index].buf, 0, BUFSIZE);
 
 	clock_gettime(CLOCK_REALTIME, &st);

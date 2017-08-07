@@ -40,7 +40,8 @@ static void problem(int signum) {
 int main(int argc, char *argv[]) {
   int err, n;
   int nsocks;
-  int lsock, esock;
+  int asock, lsock, esock;
+  int aport = 8000;
   int lport = 8090;
   int pid;
   time_t stime = time(0);
@@ -173,8 +174,11 @@ int main(int argc, char *argv[]) {
   open_output_file();
 
   proto = getprotobyname("TCP");
+
+  asock = socket(AF_INET, SOCK_STREAM, proto->p_proto);
   lsock = socket(AF_INET, SOCK_STREAM, proto->p_proto);
 
+  /* Listen socket */
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = INADDR_ANY;
   serv_addr.sin_port = htons(lport);
@@ -190,8 +194,32 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
+  /* Admin socket */
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = INADDR_ANY;
+  serv_addr.sin_port = htons(aport);
+
+  if (bind(asock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+    perror("ERROR on binding");
+    exit(1);
+  }
+
+  err = listen(asock, SOMAXCONN);
+  if (err < 0) {
+    perror("listen");
+    exit(-1);
+  }
+
+
+
   poll_init();
   int ret = poll_add_fd(lsock);
+  if (ret == POLL_EFULL) {
+    fprintf(stderr, "poll queue is full!\n");
+    exit(1);
+  }
+
+  ret = poll_add_fd(asock);
   if (ret == POLL_EFULL) {
     fprintf(stderr, "poll queue is full!\n");
     exit(1);
@@ -229,6 +257,22 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
+      if( esock == asock) {
+        /* Accept new connection and register socket */
+        int csock = accept(asock, NULL, 0);
+        if (csock < 0) {
+          perror("write register asock");
+          exit(1);
+        }
+
+        sessions_add(csock, ADMIN);
+
+        fprintf(stderr, "Anslutning på asock!\n");
+
+        //admin_handler();
+        continue;
+      }
+
       if (esock == lsock) {
 
         /* Accept new connection and register socket */
@@ -238,7 +282,7 @@ int main(int argc, char *argv[]) {
           exit(1);
         }
 
-        sessions_add(csock);
+        sessions_add(csock, CSP);
 
       } else {
 

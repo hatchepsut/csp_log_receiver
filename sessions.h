@@ -10,6 +10,11 @@
 
 #include <time.h>
 
+enum session_type {
+  CSP,
+  ADMIN
+};
+
 typedef struct  {
   int fd; // File descriptor for out file
   int bytes_read;
@@ -18,10 +23,11 @@ typedef struct  {
   char *buf;
   time_t stime;
   struct timespec st;
+  int type;
 } session_t;
 
 int							sessions_init();
-int							sessions_add(int sock);
+int							sessions_add(int sock, int type);
 int							sessions_process(int index);
 int							sessions_remove(int index);
 void						session_remove_old_sessions();
