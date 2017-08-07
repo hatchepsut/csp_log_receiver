@@ -10,18 +10,18 @@ src = *.c
 .c.o:
 	cc $(CFLAGS) -c -o $@ $<
 
-csp: log.o poll.o sessions.o csp.c
-	$(CC) $(CFLAGS) -o csp log.o poll.o sessions.o csp.c
+csp: log.o poll.o sessions.o csp.o
+	$(CC) $(CFLAGS) -o csp log.o poll.o sessions.o csp.o
 
-testfd: poll.o testfd.c
-	$(CC) $(CFLAGS) -o testfd poll.o testfd.c
+testfd: poll.o testfd.o
+	$(CC) $(CFLAGS) -o testfd poll.o testfd.o
 	
-testsessions: log.o poll.o sessions.o testsessions.c
-	$(CC) $(CFLAGS) -o testsessions log.o poll.o sessions.o testsessions.c
+testsessions: log.o poll.o sessions.o testsessions.o
+	$(CC) $(CFLAGS) -o testsessions log.o poll.o sessions.o testsessions.o
 	
-testlog: log.o testlog.c
-	$(CC) $(CFLAGS) -o testlog log.o testlog.c
-	
+testlog: log.o testlog.o
+	$(CC) $(CFLAGS) -o testlog log.o testlog.o
+
 clean:
 	@rm -f *.o $(ALL)
 
